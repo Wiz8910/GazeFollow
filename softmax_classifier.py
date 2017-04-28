@@ -3,6 +3,7 @@ import argparse
 import sys
 import os
 import numpy as np
+from PIL import Image
 import tensorflow as tf
 
 # Silence Tensorflow warnings
@@ -19,26 +20,30 @@ TRAINING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'train_annotations.txt')
 TESTING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'test_annotations.txt')
 
 def main(_):
-    key, decoded_images, annotations = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
-    labels = [annotation.label for annotation in annotations]
+    _, _, annotations = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
 
-    print(key, type(decoded_images))
+    labels = np.zeros((len(annotations), 25), dtype=np.uint8)
+    for i, annotation in enumerate(annotations):
+        labels[i][annotation.label] = 1
+
+    # print(key, type(decoded_images))
+
+    images = [] 
+    for a in annotations:
+        image = np.array(Image.open(a.file_path), dtype=np.uint8)
+        image = image.reshape(512 * 759 * 3)
+        images.append(image)
 
     # (512, 759, 3)
 
-    # x = tf.placeholder(tf.float32, [None, 784])
-    # W = tf.Variable(tf.zeros([784, 10]))
-    # b = tf.Variable(tf.zeros([10]))
-
     # Create the model
-    x = tf.placeholder(tf.float32, [None, 784])
-    W = tf.Variable(tf.zeros([784, 10]))
-    # W = tf.Variable([np.random.randn(), np.random.randn(), np.random.randn()])
-    b = tf.Variable(tf.zeros([10]))
+    x = tf.placeholder(tf.float32, [None, 512 * 759 * 3])
+    W = tf.Variable(tf.zeros([512 * 759 * 3, 25]))
+    b = tf.Variable(tf.zeros([25]))
     y = tf.matmul(x, W) + b
 
     # Define loss and optimizer
-    y_ = tf.placeholder(tf.float32, [ANY_DIM, 10])
+    y_ = tf.placeholder(tf.float32, [None, 25])
 
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
@@ -47,23 +52,23 @@ def main(_):
     sess = tf.InteractiveSession()
     tf.global_variables_initializer().run()
 
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(coord=coord)
+    # coord = tf.train.Coordinator()
+    # threads = tf.train.start_queue_runners(coord=coord)
 
-    for i in range(1): #length of your filename list
-        image = images[i].eval()
-        print(image.shape)
-        Image.fromarray(np.asarray(image)).show()
+    # for i in range(1): #length of your filename list
+    #     image = images[i].eval()
+    #     print(image.shape)
+    #     Image.fromarray(np.asarray(image)).show()
 
-    coord.request_stop()
-    coord.join(threads)
+    # coord.request_stop()
+    # coord.join(threads)
 
     # Train
     # for _ in range(1000):
     #     batch_xs, batch_ys = mnist.train.next_batch(100)
     #     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
 
-    sess.run(train_step, feed_dict={x:decoded_images, y_:labels})
+    sess.run(train_step, feed_dict={x:images, y_:labels})
 
     # Test trained model
     # correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
