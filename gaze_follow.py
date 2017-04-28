@@ -13,11 +13,6 @@ import display
 # Silence Tensorflow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
-# replace with command-line args
-DATA_FILE_PATH = 'data'
-TRAINING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'train_annotations.txt')
-TESTING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'test_annotations.txt')
-
 """ 
 README_dataset.txt is incorrect
 bounding_box: [x_min, y_min, x_max, y_max],
@@ -40,6 +35,7 @@ def grid_label(file_path, xy_coordinates):
      [5, ... 25]]
     """
     image = np.array(Image.open(file_path), dtype=np.uint8)
+    print(image.shape)
     image_height, image_width, _ = image.shape
 
     x, y = xy_coordinates
@@ -88,7 +84,7 @@ def image_annotations(annotations_file_path, data_file_path):
                                   eye_center=floats[5:7],
                                   label=label)
             i += 1
-            if i == 8:
+            if i == 1:
                 break # remove this
 
 def image_data(annotations_file_path, data_file_path):
@@ -96,8 +92,8 @@ def image_data(annotations_file_path, data_file_path):
     annotations = [a for a in image_annotations(annotations_file_path, data_file_path)]
 
     # display images
-    for annotation in annotations:
-        display.image_with_annotation(annotation, GRID_SIZE)
+    # for annotation in annotations:
+    #     display.image_with_annotation(annotation, GRID_SIZE)
 
     file_paths = [a.file_path for a in annotations]
     filename_queue = tf.train.string_input_producer(file_paths)
@@ -107,35 +103,7 @@ def image_data(annotations_file_path, data_file_path):
 
     decoded_images = tf.image.decode_jpeg(images)
 
-    init = tf.global_variables_initializer()
-    with tf.Session() as sess:
-        sess.run(init)
-
-        # Start populating the filename queue.
-
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
-
-        for i in range(1): #length of your filename list
-            image = images[i].eval()
-            print(image.shape)
-            Image.fromarray(np.asarray(image)).show()
-
-        coord.request_stop()
-        coord.join(threads)
-
-    # sess = tf.Session()
-    # init = tf.global_variables_initializer()
-    # sess.run(init)
-
-    # sess = tf.InteractiveSession()
-    # tf.global_variables_initializer().run()
-
-    # tf.image.draw_bounding_boxes(decoded_images, boxes, name=None)
-
-    # print(my_img)
-
-    # return Dataset()
+    return key, decoded_images, annotations
 
 if __name__ == '__main__':
     image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
