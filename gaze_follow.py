@@ -24,9 +24,9 @@ TESTING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'test_annotations.txt')
 
 """ 
 README_dataset.txt is incorrect
-bounding_box: [y_min, x_min, y_max, x_max],
-gaze: [y, x]
-eye_center: [y, x]
+bounding_box: [x_min, y_min, x_max, y_max],
+gaze: [x, y]
+eye_center: [x, y]
 """
 ImageAnnotation = namedtuple('ImageAnnotation',
                              ['id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'label'])
