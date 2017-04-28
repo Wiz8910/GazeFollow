@@ -41,7 +41,6 @@ def image_with_annotation(annotation, grid_size):
     label = annotation.label 
     row = label // grid_size + 1
     col = label % grid_size
-    print(label, row, col)
 
     label_width = figure_width / grid_size
     label_height = figure_height / grid_size
@@ -50,11 +49,11 @@ def image_with_annotation(annotation, grid_size):
     label_y1 = label_height * (row - 1)
 
     label_box = patches.Rectangle((label_x1,label_y1),
-                                     label_width,
-                                     label_height,
-                                     linewidth=1,
-                                     edgecolor='r',
-                                     facecolor='none')
+                                  label_width,
+                                  label_height,
+                                  linewidth=1,
+                                  edgecolor='r',
+                                  facecolor='none')
 
     # Create a Circle patch for gaze
     gaze_x, gaze_y = annotation.gaze
