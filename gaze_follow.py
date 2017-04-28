@@ -4,10 +4,6 @@ from collections import namedtuple
 
 import tensorflow as tf
 
-# import matplotlib 
-# matplotlib.use('TkAgg') # macOS only
-
-from scipy import misc
 import scipy.io
 import numpy as np
 from PIL import Image
@@ -27,78 +23,48 @@ README_dataset.txt is incorrect
 bounding_box: [x_min, y_min, x_max, y_max],
 gaze: [x, y]
 eye_center: [x, y]
+label: int from range [1 - 25] representing grid cell id
 """
 ImageAnnotation = namedtuple('ImageAnnotation',
                              ['id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'label'])
 
-GRID_SIZE = 5 # Number of rows and cols
+GRID_SIZE = 5 # 5x5 grid
 
-# def grid_labels(annotations):
-
-#     for i in range(len(annotations)):
-#         gaze_y, gaze_x = annotations[i].gaze
-#         image = np.array(Image.open(annotations[i].file_path), dtype=np.uint8)
-#         image_width, image_height = image.shape
-
-#         cell_width = image_width / GRID_SIZE
-#         cell_height = image_height / GRID_SIZE
-
-#         label_col = None
-#         label_row = None
-
-#         for j in range(1, GRID_SIZE+1):
-#             col = j * cell_width
-#             row = j * cell_height
-#             if gaze_x <= col:
-#                 label_col = j
-#             if gaze_y <= row:
-#                 label_row = j
-#             if gaze_x > col and gaze_y > row:
-#                 break
-
-#         label = 5 * (label_col - 1) + label_row
-#         yield label
-
-def grid_label(file_path, gaze):
+def grid_label(file_path, xy_coordinates):
     """
-    [[1, 6,  11, 16],
-     [2, 7,  12,],
-     [3, 8,  13],
-     [4, 9,  14],
-     [5, 10, 15]]
+    Return the classification label for the grid cell containing the coordinates.
+
+    Grid Cell Labels
+    [[1, ... 21],
+      ...
+     [5, ... 25]]
     """
     image = np.array(Image.open(file_path), dtype=np.uint8)
     image_height, image_width, _ = image.shape
 
-    gaze_x, gaze_y = gaze
-    gaze_y *= image_height
-    gaze_x *= image_width
+    x, y = xy_coordinates
+    y *= image_height
+    x *= image_width
 
     cell_width = image_width / GRID_SIZE
     cell_height = image_height / GRID_SIZE
-
-    print(gaze_y, gaze_x, image_height, image_width, cell_width, cell_height)
 
     label_col = None
     label_row = None
 
     for j in range(1, GRID_SIZE+1):
         col = j * cell_width
-        print(col)
-        if gaze_x <= col:
+        if x <= col:
             label_col = j
             break
 
     for j in range(1, GRID_SIZE+1):
         row = j * cell_height
-        print(row)
-        if gaze_y <= row:
+        if y <= row:
             label_row = j
             break
 
-    label = GRID_SIZE * (label_row - 1) + label_col
-    print(label, label_row, label_col)
-    return label
+    return GRID_SIZE * (label_row - 1) + label_col
 """
 SVM: 
 We generate features by concatenating the quantized eye position with 
@@ -150,18 +116,15 @@ def image_annotations(annotations_file_path, data_file_path):
                                   eye_center=floats[5:7],
                                   label=label)
             i += 1
-            if i == 2:
+            if i == 8:
                 break # remove this
 
 def image_data(annotations_file_path, data_file_path):
 
     annotations = [a for a in image_annotations(annotations_file_path, data_file_path)]
-    # labels = [l for l in grid_labels(annotations)]
 
-    # mat = scipy.io.loadmat('data/train_annotations.mat')
-    # print(mat)
-
-    display.image_with_annotation(annotations[0], GRID_SIZE)
+    for annotation in annotations:
+        display.image_with_annotation(annotation, GRID_SIZE)
 
     # file_paths = [a.file_path for a in annotations]
 

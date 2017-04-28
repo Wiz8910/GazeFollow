@@ -41,7 +41,7 @@ def image_with_annotation(annotation, grid_size):
     label = annotation.label 
     row = label // grid_size + 1
     col = label % grid_size
-    print(row, col)
+    print(label, row, col)
 
     label_width = figure_width / grid_size
     label_height = figure_height / grid_size
