@@ -30,8 +30,7 @@ def main(_):
 
     images = [] 
     for a in annotations:
-        image = np.array(Image.open(a.file_path), dtype=np.uint8)
-        image = image.reshape(512 * 759 * 3)
+        image = a.image.reshape(512 * 759 * 3)
         images.append(image)
 
     # (512, 759, 3)

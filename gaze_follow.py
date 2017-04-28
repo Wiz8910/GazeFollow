@@ -21,11 +21,11 @@ eye_center: [x, y]
 label: int from range [1 - 25] representing grid cell id
 """
 ImageAnnotation = namedtuple('ImageAnnotation',
-                             ['id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'label'])
+                             ['id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'label', 'image'])
 
 GRID_SIZE = 5 # 5x5 grid
 
-def grid_label(file_path, xy_coordinates):
+def grid_label(image, xy_coordinates):
     """
     Return the classification label for the grid cell containing the coordinates.
 
@@ -34,8 +34,6 @@ def grid_label(file_path, xy_coordinates):
       ...
      [5, ... 25]]
     """
-    image = np.array(Image.open(file_path), dtype=np.uint8)
-    print(image.shape)
     image_height, image_width, _ = image.shape
 
     x, y = xy_coordinates
@@ -63,6 +61,7 @@ def grid_label(file_path, xy_coordinates):
     return GRID_SIZE * (label_row - 1) + label_col
 
 def image_annotations(annotations_file_path, data_file_path):
+
     with open(annotations_file_path, 'r') as f:
         i = 0
         for line in f:
@@ -74,17 +73,21 @@ def image_annotations(annotations_file_path, data_file_path):
             floats = [float(x) for x in line[1:10]]
 
             file_path = os.path.join(data_file_path, line[0])
+
+            image = np.array(Image.open(file_path), dtype=np.uint8)
+
             gaze = floats[7:]
-            label = grid_label(file_path, gaze)
+            label = grid_label(image, gaze)
 
             yield ImageAnnotation(id=floats[0],
                                   file_path=file_path,
                                   bounding_box=floats[1:5],
                                   gaze=gaze,
                                   eye_center=floats[5:7],
-                                  label=label)
+                                  label=label,
+                                  image=image)
             i += 1
-            if i == 1:
+            if i == 100:
                 break # remove this
 
 def image_data(annotations_file_path, data_file_path):
@@ -104,6 +107,3 @@ def image_data(annotations_file_path, data_file_path):
     decoded_images = tf.image.decode_jpeg(images)
 
     return key, decoded_images, annotations
-
-if __name__ == '__main__':
-    image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
