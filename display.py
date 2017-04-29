@@ -9,7 +9,8 @@ import numpy as np
 
 def image_with_annotation(annotation, grid_size):
 
-    im = np.array(Image.open(annotation.file_path), dtype=np.uint8)
+    #im = np.array(Image.open(annotation.file_path), dtype=np.uint8)
+    im = annotation.image
     figure_height, figure_width, _ = im.shape
 
     # Create figure and axes

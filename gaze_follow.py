@@ -4,10 +4,10 @@ from collections import namedtuple
 
 import tensorflow as tf
 
-import scipy.io
+#import scipy.io
 import numpy as np
 from PIL import Image
-
+import PIL
 import display
 
 # Silence Tensorflow warnings
@@ -24,6 +24,8 @@ ImageAnnotation = namedtuple('ImageAnnotation',
                              ['id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'label', 'image'])
 
 GRID_SIZE = 5 # 5x5 grid
+IMAGE_WIDTH = 256
+IMAGE_HEIGHT = 256
 
 def grid_label(image, xy_coordinates):
     """
@@ -73,8 +75,9 @@ def image_annotations(annotations_file_path, data_file_path):
             floats = [float(x) for x in line[1:10]]
 
             file_path = os.path.join(data_file_path, line[0])
-
-            image = np.array(Image.open(file_path), dtype=np.uint8)
+            image = Image.open(file_path)
+            image = image.resize((IMAGE_WIDTH,IMAGE_HEIGHT),resample=PIL.Image.NEAREST)
+            image = np.array(image, dtype=np.uint8)
 
             gaze = floats[7:]
             label = grid_label(image, gaze)
@@ -95,8 +98,8 @@ def image_data(annotations_file_path, data_file_path):
     annotations = [a for a in image_annotations(annotations_file_path, data_file_path)]
 
     # display images
-    # for annotation in annotations:
-    #     display.image_with_annotation(annotation, GRID_SIZE)
+    #for annotation in annotations:
+     #   display.image_with_annotation(annotation, GRID_SIZE)
 
     file_paths = [a.file_path for a in annotations]
     filename_queue = tf.train.string_input_producer(file_paths)
