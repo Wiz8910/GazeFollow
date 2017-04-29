@@ -43,24 +43,7 @@ def main(_):
     sess = tf.InteractiveSession()
     tf.global_variables_initializer().run()
 
-    # coord = tf.train.Coordinator()
-    # threads = tf.train.start_queue_runners(coord=coord)
-
-    # for i in range(1): #length of your filename list
-    #     image = images[i].eval()
-    #     print(image.shape)
-    #     Image.fromarray(np.asarray(image)).show()
-
-    # coord.request_stop()
-    # coord.join(threads)
-
-    # Train
-    # for _ in range(1000):
-    #     batch_xs, batch_ys = mnist.train.next_batch(100)
-    #     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-
     sess.run(train_step, feed_dict={x:images, gaze_y_:train_gaze_labels, eye_y_:train_eye_labels})
-
 
     # Test trained model
     correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))

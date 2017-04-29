@@ -104,11 +104,11 @@ def image_data(annotations_file_path, data_file_path):
 
     decoded_images = tf.image.decode_jpeg(images)
 
-    gaze_labels = np.zeros((len(annotations), 25), dtype=np.uint8)
+    gaze_labels = np.zeros((len(annotations), 25), dtype=np.float)
     for i, annotation in enumerate(annotations):
         gaze_labels[i][annotation.gaze_label] = 1
 
-    eye_labels = np.zeros((len(annotations), 25), dtype=np.uint8)
+    eye_labels = np.zeros((len(annotations), 25), dtype=np.float)
     for i, annotation in enumerate(annotations):
         eye_labels[i][annotation.eye_label] = 1
 
@@ -121,3 +121,4 @@ def image_data(annotations_file_path, data_file_path):
         images.append(image)
 
     return key, decoded_images, annotations, gaze_labels, eye_labels, images
+
