@@ -18,7 +18,7 @@ README_dataset.txt is incorrect
 bounding_box: [x_min, y_min, x_max, y_max],
 gaze: [x, y]
 eye_center: [x, y]
-label: int from range [1 - 25] representing grid cell id
+label: int from range [0- 24] representing grid cell id
 """
 ImageAnnotation = namedtuple('ImageAnnotation',
                              ['id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'label', 'image'])
@@ -26,41 +26,42 @@ ImageAnnotation = namedtuple('ImageAnnotation',
 GRID_SIZE = 5 # 5x5 grid
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
+IMAGE_DEPTH = 3
 
 def grid_label(image, xy_coordinates):
     """
     Return the classification label for the grid cell containing the coordinates.
 
     Grid Cell Labels
-    [[1, ... 21],
+    [[0, ... 20],
       ...
-     [5, ... 25]]
+     [4, ... 24]]
     """
-    image_height, image_width, _ = image.shape
+    #image_height, image_width, _ = image.shape
 
     x, y = xy_coordinates
-    y *= image_height
-    x *= image_width
+    y *= IMAGE_HEIGHT
+    x *= IMAGE_WIDTH
 
-    cell_width = image_width / GRID_SIZE
-    cell_height = image_height / GRID_SIZE
+    cell_width = IMAGE_HEIGHT / GRID_SIZE
+    cell_height = IMAGE_HEIGHT / GRID_SIZE
 
-    label_col = None
-    label_row = None
-
+    label_col = x//cell_width
+    label_row = y//cell_height
+    '''
     for j in range(1, GRID_SIZE+1):
         col = j * cell_width
         if x <= col:
-            label_col = j
+            label_col = j-1
             break
 
     for j in range(1, GRID_SIZE+1):
         row = j * cell_height
         if y <= row:
-            label_row = j
+            label_row = j-1
             break
-
-    return GRID_SIZE * (label_row - 1) + label_col
+    '''
+    return int(GRID_SIZE * label_row + label_col)
 
 def image_annotations(annotations_file_path, data_file_path):
 
@@ -76,12 +77,13 @@ def image_annotations(annotations_file_path, data_file_path):
 
             file_path = os.path.join(data_file_path, line[0])
             image = Image.open(file_path)
-            image = image.resize((IMAGE_WIDTH,IMAGE_HEIGHT),resample=PIL.Image.NEAREST)
+            image = image.resize((IMAGE_WIDTH,IMAGE_HEIGHT))
             image = np.array(image, dtype=np.uint8)
-
+            #print(image.shape)
+            if len(image.shape) !=3:
+                continue
             gaze = floats[7:]
             label = grid_label(image, gaze)
-
             yield ImageAnnotation(id=floats[0],
                                   file_path=file_path,
                                   bounding_box=floats[1:5],
@@ -90,8 +92,8 @@ def image_annotations(annotations_file_path, data_file_path):
                                   label=label,
                                   image=image)
             i += 1
-            if i == 100:
-                break # remove this
+            #if i == 1000:
+             #   break # remove this
 
 def image_data(annotations_file_path, data_file_path):
 
@@ -109,4 +111,16 @@ def image_data(annotations_file_path, data_file_path):
 
     decoded_images = tf.image.decode_jpeg(images)
 
-    return key, decoded_images, annotations
+    labels = np.zeros((len(annotations), 25), dtype=np.uint8)
+    for i, annotation in enumerate(annotations):
+        labels[i][annotation.label] = 1
+
+    # print(key, type(decoded_images))
+
+    #images = [a.image for a in annotations]
+    images=[]
+    for a in annotations:
+        image = a.image.reshape(IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH)
+        images.append(image)
+
+    return key, decoded_images, annotations,labels,images

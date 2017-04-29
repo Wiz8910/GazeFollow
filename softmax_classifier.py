@@ -20,24 +20,17 @@ TRAINING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'train_annotations.txt')
 TESTING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'test_annotations.txt')
 
 def main(_):
-    _, _, annotations = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
+    _, _, annotations,labels,images = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
 
-    labels = np.zeros((len(annotations), 25), dtype=np.uint8)
-    for i, annotation in enumerate(annotations):
-        labels[i][annotation.label] = 1
 
-    # print(key, type(decoded_images))
+    _, _, test_annotations,test_labels,test_images = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
 
-    images = [] 
-    for a in annotations:
-        image = a.image.reshape(512 * 759 * 3)
-        images.append(image)
 
     # (512, 759, 3)
 
     # Create the model
-    x = tf.placeholder(tf.float32, [None, 512 * 759 * 3])
-    W = tf.Variable(tf.zeros([512 * 759 * 3, 25]))
+    x = tf.placeholder(tf.float32, [None, gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH])
+    W = tf.Variable(tf.zeros([gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH, 25]))
     b = tf.Variable(tf.zeros([25]))
     y = tf.matmul(x, W) + b
 
@@ -69,11 +62,12 @@ def main(_):
 
     sess.run(train_step, feed_dict={x:images, y_:labels})
 
+
     # Test trained model
-    # correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
-    # accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    # print(sess.run(accuracy, feed_dict={x: mnist.test.images,
-    #                                     y_: mnist.test.labels}))
+    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    print(sess.run(accuracy, feed_dict={x: test_images,
+                                         y_: test_labels}))
 
 
 if __name__ == '__main__':

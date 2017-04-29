@@ -40,14 +40,14 @@ def image_with_annotation(annotation, grid_size):
 
     # Create rectangle patch for label
     label = annotation.label 
-    row = label // grid_size + 1
+    row = label // grid_size
     col = label % grid_size
 
     label_width = figure_width / grid_size
     label_height = figure_height / grid_size
 
-    label_x1 = label_width * (col - 1)
-    label_y1 = label_height * (row - 1)
+    label_x1 = label_width * (col)
+    label_y1 = label_height * (row)
 
     label_box = patches.Rectangle((label_x1,label_y1),
                                   label_width,
