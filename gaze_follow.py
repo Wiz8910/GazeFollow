@@ -21,7 +21,7 @@ eye_center: [x, y]
 label: int from range [0- 24] representing grid cell id
 """
 ImageAnnotation = namedtuple('ImageAnnotation', [
-    'id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'gaze_label', 'eye_label', 'image'])
+    'id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'gaze_label', 'eye_label'])
 
 GRID_SIZE = 5 # 5x5 grid
 IMAGE_WIDTH = 256
@@ -41,7 +41,7 @@ def grid_label(image, xy_coordinates):
     y *= IMAGE_HEIGHT
     x *= IMAGE_WIDTH
 
-    cell_width = IMAGE_HEIGHT / GRID_SIZE
+    cell_width = IMAGE_WIDTH / GRID_SIZE
     cell_height = IMAGE_HEIGHT / GRID_SIZE
 
     label_col = x // cell_width
@@ -62,28 +62,25 @@ def image_annotations(annotations_file_path, data_file_path):
             floats = [float(x) for x in line[1:10]]
 
             file_path = os.path.join(data_file_path, line[0])
-            image = Image.open(file_path)
-            image = image.resize((IMAGE_WIDTH,IMAGE_HEIGHT))
-            image = np.array(image, dtype=np.uint8)
-            
+            image = np.array(Image.open(file_path), dtype=np.uint8)
+
             # Don't add gray scale images to data set
             if len(image.shape) !=3:
                 continue
-            
+
             gaze = floats[7:]
             gaze_label = grid_label(image, gaze)
-            
+
             eye_center = floats[5:7]
             eye_label = grid_label(image, eye_center)
-            
+
             yield ImageAnnotation(id=floats[0],
                                   file_path=file_path,
                                   bounding_box=floats[1:5],
                                   gaze=gaze,
                                   eye_center=eye_center,
                                   gaze_label=gaze_label,
-                                  eye_label=eye_label,
-                                  image=image)
+                                  eye_label=eye_label)
             i += 1
             if i == 100:
                break # remove this
@@ -116,18 +113,7 @@ def image_data(annotations_file_path, data_file_path):
     min_after_dequeue = 10000
     batch_size = 100
     capacity = min_after_dequeue + 3 * batch_size
-    # image_batch, label_batch = tf.train.shuffle_batch(
-    #     [image, gaze_labels[0]], batch_size=batch_size, capacity=capacity,
-    #     min_after_dequeue=min_after_dequeue)
     image_batch = tf.train.batch([image], batch_size=batch_size, capacity=capacity)
-
-    # print(key, type(decoded_images))
-
-    #images = [a.image for a in annotations]
-    # images=[]
-    # for a in annotations:
-    #     image = a.image.reshape(IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH)
-    #     images.append(image)
 
     return image_batch, gaze_labels, eye_labels
 
