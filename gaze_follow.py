@@ -85,7 +85,7 @@ def image_annotations(annotations_file_path, data_file_path):
                                   eye_label=eye_label,
                                   image=image)
             i += 1
-            if i == 1000:
+            if i == 100:
                break # remove this
 
 def image_data(annotations_file_path, data_file_path):
@@ -96,29 +96,38 @@ def image_data(annotations_file_path, data_file_path):
     #for annotation in annotations:
      #   display.image_with_annotation(annotation, GRID_SIZE)
 
+    gaze_labels = np.zeros((len(annotations), 25), dtype=np.float)
+    eye_labels = np.zeros((len(annotations), 25), dtype=np.float)
+
+    for i, annotation in enumerate(annotations):
+        gaze_labels[i][annotation.gaze_label] = 1
+        eye_labels[i][annotation.eye_label] = 1
+
     file_paths = [a.file_path for a in annotations]
     filename_queue = tf.train.string_input_producer(file_paths)
 
     reader = tf.WholeFileReader()
-    key, images = reader.read(filename_queue)
+    _, image = reader.read(filename_queue)
 
-    decoded_images = tf.image.decode_jpeg(images)
+    decoded_image = tf.image.decode_jpeg(image)
+    resized_image = tf.image.resize_images(decoded_image, [IMAGE_WIDTH, IMAGE_HEIGHT])
+    image = tf.reshape(resized_image, [IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH])
 
-    gaze_labels = np.zeros((len(annotations), 25), dtype=np.float)
-    for i, annotation in enumerate(annotations):
-        gaze_labels[i][annotation.gaze_label] = 1
-
-    eye_labels = np.zeros((len(annotations), 25), dtype=np.float)
-    for i, annotation in enumerate(annotations):
-        eye_labels[i][annotation.eye_label] = 1
+    min_after_dequeue = 10000
+    batch_size = 100
+    capacity = min_after_dequeue + 3 * batch_size
+    # image_batch, label_batch = tf.train.shuffle_batch(
+    #     [image, gaze_labels[0]], batch_size=batch_size, capacity=capacity,
+    #     min_after_dequeue=min_after_dequeue)
+    image_batch = tf.train.batch([image], batch_size=batch_size, capacity=capacity)
 
     # print(key, type(decoded_images))
 
     #images = [a.image for a in annotations]
-    images=[]
-    for a in annotations:
-        image = a.image.reshape(IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH)
-        images.append(image)
+    # images=[]
+    # for a in annotations:
+    #     image = a.image.reshape(IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH)
+    #     images.append(image)
 
-    return key, decoded_images, annotations, gaze_labels, eye_labels, images
+    return image_batch, gaze_labels, eye_labels
 
