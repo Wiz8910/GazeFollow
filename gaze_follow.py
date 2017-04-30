@@ -77,7 +77,7 @@ def image_annotations(annotations_file_path, data_file_path):
 
             yield ImageAnnotation(annotation_id, file_path, bounding_box, gaze, eye_center, gaze_label, eye_label)
             i += 1
-            if i == 100:
+            if i == 1000:
                break # remove this
 
 def image_data(annotations_file_path, data_file_path):
@@ -102,8 +102,8 @@ def image_data(annotations_file_path, data_file_path):
     _, image = reader.read(filename_queue)
 
     decoded_image = tf.image.decode_jpeg(image)
-    resized_image = tf.image.resize_images(decoded_image, [IMAGE_WIDTH, IMAGE_HEIGHT])
-    image = tf.reshape(resized_image, [IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH])
+    image = tf.image.resize_images(decoded_image, [IMAGE_WIDTH, IMAGE_HEIGHT])
+    image = tf.reshape(image, [IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH])
 
     min_after_dequeue = 10000
     batch_size = len(annotations)
@@ -111,4 +111,3 @@ def image_data(annotations_file_path, data_file_path):
     image_batch = tf.train.batch([image], batch_size=batch_size, capacity=capacity)
 
     return image_batch, gaze_labels, eye_labels
-

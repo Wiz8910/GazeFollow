@@ -24,9 +24,10 @@ def main(_):
     test_x, test_gaze_labels, test_eye_labels = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
 
     # Create the model
+    x = tf.placeholder(tf.float32, [None, gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH])
     W = tf.Variable(tf.zeros([gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH, 25]))
     b = tf.Variable(tf.zeros([25]))
-    y = tf.matmul(train_x, W) + b
+    y = tf.matmul(x, W) + b
 
     # # Define loss and optimizer
     gaze_y_ = tf.placeholder(tf.float32, [None, 25])
@@ -45,12 +46,14 @@ def main(_):
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        sess.run(train_step, feed_dict={gaze_y_:train_gaze_labels})
+        training_images = sess.run(train_x)
+        sess.run(train_step, feed_dict={x: training_images, gaze_y_:train_gaze_labels})
 
         # Test trained model
+        testing_images = sess.run(test_x)
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        print(sess.run(accuracy, feed_dict={gaze_y_: test_gaze_labels}))
+        print(sess.run(accuracy, feed_dict={x: testing_images, gaze_y_: test_gaze_labels}))
 
         # stop our queue threads and properly close the session
         coord.request_stop()
