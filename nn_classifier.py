@@ -20,22 +20,21 @@ TRAINING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'train_annotations.txt')
 TESTING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'test_annotations.txt')
 
 def deepnn(x):
-    """deepnn builds the graph for a deep net for classifying digits.
+    """Build the graph for a deep net for classifying labels.
     Args:
     x: an input tensor with the dimensions (N_examples, 784), where 784 is the
     number of pixels in a standard MNIST image.
     Returns:
-    A tuple (y, keep_prob). y is a tensor of shape (N_examples, 10), with values
-    equal to the logits of classifying the digit into one of 10 classes (the
-    digits 0-9). keep_prob is a scalar placeholder for the probability of
-    dropout.
+    A tuple (y, keep_prob). y is a tensor of shape (N_examples, 25), with values
+    equal to the logits of classifying the label into one of 25 classes.
+    keep_prob is a scalar placeholder for the probability of dropout.
     """
     # Reshape to use within a convolutional neural net.
     # Last dimension is for "features" - there is only one here, since images are
     # grayscale -- it would be 3 for an RGB image, 4 for RGBA, etc.
-    x_image = tf.reshape(x, [-1, 28, 28, 3])
+    x_image = tf.reshape(x, [-1, 32, 32, 3])
 
-    # First convolutional layer - maps one grayscale image to 32 feature maps.
+    # First convolutional layer - maps one RGB image to 32 feature maps.
     W_conv1 = weight_variable([5, 5, 3, 32])
     b_conv1 = bias_variable([32])
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -51,12 +50,14 @@ def deepnn(x):
     # Second pooling layer.
     h_pool2 = max_pool_2x2(h_conv2)
 
+    dimension = 8 * 8 * 64
+
     # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
     # is down to 7x7x64 feature maps -- maps this to 1024 features.
-    W_fc1 = weight_variable([7 * 7 * 64, 1024])
+    W_fc1 = weight_variable([dimension, 1024])
     b_fc1 = bias_variable([1024])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, dimension])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
     # Dropout - controls the complexity of the model, prevents co-adaptation of
@@ -80,7 +81,7 @@ def conv2d(x, W):
 def max_pool_2x2(x):
     """max_pool_2x2 downsamples a feature map by 2X."""
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                        strides=[1, 2, 2, 1], padding='SAME')
+                          strides=[1, 2, 2, 1], padding='SAME')
 
 
 def weight_variable(shape):
@@ -95,18 +96,19 @@ def bias_variable(shape):
     return tf.Variable(initial)
 
 def main(_):
-    train_key, train_images, annotations, train_gaze_labels, train_eye_labels, _ = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
-    test_key, test_images,  test_annotations, test_gaze_labels, test_eye_labels, _ = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
+    train_x, train_gaze_labels, _ = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
+    test_x, test_gaze_labels, _ = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
 
-    # Create the model
-    x = tf.placeholder(tf.float32, [None, gaze_follow.IMAGE_WIDTH, gaze_follow.IMAGE_HEIGHT, gaze_follow.IMAGE_DEPTH])
+    print("data loaded")
+
+    x = tf.placeholder(tf.float32, [None, gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH])
 
     # Define loss and optimizer
     gaze_y_ = tf.placeholder(tf.float32, [None, 25])
     # eye_y_ = tf.placeholder(tf.float32, [None, 25])
 
     # Build the graph for the deep net
-    y_conv, keep_prob = deepnn(train_images)
+    y_conv, keep_prob = deepnn(x)
 
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=gaze_y_, logits=y_conv))
@@ -115,13 +117,30 @@ def main(_):
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
 
-        train_accuracy = accuracy.eval(feed_dict={x: train_images, gaze_y_: train_gaze_labels, keep_prob: 1.0})
-        print('training accuracy %g' % (train_accuracy))
-        train_step.run(feed_dict={x: train_images, gaze_y_: train_gaze_labels, keep_prob: 0.5})
+        # initialize the variables
+        init = tf.global_variables_initializer()
+        sess.run(init)
 
-    print('test accuracy %g' % accuracy.eval(feed_dict={x: test_images, gaze_y_: test_gaze_labels, keep_prob: 1.0}))
+        # initialize the queue threads to start to shovel data
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+
+        training_images = sess.run(train_x)
+        # train_accuracy = accuracy.eval(feed_dict={x: training_images, gaze_y_: train_gaze_labels, keep_prob: 1.0})
+        # print('training accuracy %g' % (train_accuracy))
+        train_step.run(feed_dict={x: training_images, gaze_y_: train_gaze_labels, keep_prob: 0.5})
+
+        print("training finished")
+
+        # Test trained model
+        testing_images = sess.run(test_x)
+        print('test accuracy %g' % accuracy.eval(feed_dict={x: testing_images, gaze_y_: test_gaze_labels, keep_prob: 1.0}))
+
+        # stop our queue threads and properly close the session
+        coord.request_stop()
+        coord.join(threads)
+        sess.close()
 
 
 if __name__ == '__main__':
