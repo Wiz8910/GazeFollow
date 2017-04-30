@@ -9,8 +9,8 @@ import numpy as np
 
 def image_with_annotation(annotation, grid_size):
 
-    #im = np.array(Image.open(annotation.file_path), dtype=np.uint8)
-    im = annotation.image
+    im = np.array(Image.open(annotation.file_path), dtype=np.uint8)
+    # im = annotation.image
     figure_height, figure_width, _ = im.shape
 
     # Create figure and axes
@@ -36,25 +36,11 @@ def image_with_annotation(annotation, grid_size):
                                      facecolor='none')
 
     # Draw grid
-    plt.grid(True)
+    # plt.grid(True)
 
-    # Create rectangle patch for label
-    label = annotation.label 
-    row = label // grid_size
-    col = label % grid_size
-
-    label_width = figure_width / grid_size
-    label_height = figure_height / grid_size
-
-    label_x1 = label_width * (col)
-    label_y1 = label_height * (row)
-
-    label_box = patches.Rectangle((label_x1,label_y1),
-                                  label_width,
-                                  label_height,
-                                  linewidth=1,
-                                  edgecolor='r',
-                                  facecolor='none')
+    # Create rectangle patches for eye and gaze labels
+    eye_label = label_rectangle(annotation.eye_label, grid_size, figure_width, figure_height)
+    gaze_label = label_rectangle(annotation.gaze_label, grid_size, figure_width, figure_height)
 
     # Create a Circle patch for gaze
     gaze_x, gaze_y = annotation.gaze
@@ -74,9 +60,28 @@ def image_with_annotation(annotation, grid_size):
 
     # Add the patches to the Axes
     ax.add_patch(bounding_box)
-    ax.add_patch(label_box)
+    ax.add_patch(eye_label)
+    ax.add_patch(gaze_label)
     ax.add_patch(gaze)
     ax.add_patch(eye_center)
     ax.add_patch(arrow)
 
     plt.show()
+
+def label_rectangle(label, grid_size, figure_width, figure_height):
+    # Create rectangle patch for label
+    row = label // grid_size
+    col = label % grid_size
+
+    label_width = figure_width / grid_size
+    label_height = figure_height / grid_size
+
+    label_x1 = label_width * (col)
+    label_y1 = label_height * (row)
+
+    return patches.Rectangle((label_x1,label_y1),
+                             label_width,
+                             label_height,
+                             linewidth=1,
+                             edgecolor='r',
+                             facecolor='none')

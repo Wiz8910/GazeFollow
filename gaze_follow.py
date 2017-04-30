@@ -28,7 +28,7 @@ IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 IMAGE_DEPTH = 3
 
-def grid_label(image, xy_coordinates):
+def grid_label(xy_coordinates):
     """
     Return the classification label for the grid cell containing the coordinates.
 
@@ -68,19 +68,14 @@ def image_annotations(annotations_file_path, data_file_path):
             if len(image.shape) !=3:
                 continue
 
-            gaze = floats[7:]
-            gaze_label = grid_label(image, gaze)
-
+            annotation_id = floats[0]
+            bounding_box = floats[1:5]
             eye_center = floats[5:7]
-            eye_label = grid_label(image, eye_center)
+            eye_label = grid_label(eye_center)
+            gaze = floats[7:]
+            gaze_label = grid_label(gaze)
 
-            yield ImageAnnotation(id=floats[0],
-                                  file_path=file_path,
-                                  bounding_box=floats[1:5],
-                                  gaze=gaze,
-                                  eye_center=eye_center,
-                                  gaze_label=gaze_label,
-                                  eye_label=eye_label)
+            yield ImageAnnotation(annotation_id, file_path, bounding_box, gaze, eye_center, gaze_label, eye_label)
             i += 1
             if i == 100:
                break # remove this
@@ -90,8 +85,8 @@ def image_data(annotations_file_path, data_file_path):
     annotations = [a for a in image_annotations(annotations_file_path, data_file_path)]
 
     # display images
-    #for annotation in annotations:
-     #   display.image_with_annotation(annotation, GRID_SIZE)
+    # for annotation in annotations:
+    #    display.image_with_annotation(annotation, GRID_SIZE)
 
     gaze_labels = np.zeros((len(annotations), 25), dtype=np.float)
     eye_labels = np.zeros((len(annotations), 25), dtype=np.float)
@@ -111,7 +106,7 @@ def image_data(annotations_file_path, data_file_path):
     image = tf.reshape(resized_image, [IMAGE_WIDTH * IMAGE_HEIGHT * IMAGE_DEPTH])
 
     min_after_dequeue = 10000
-    batch_size = 100
+    batch_size = len(annotations)
     capacity = min_after_dequeue + 3 * batch_size
     image_batch = tf.train.batch([image], batch_size=batch_size, capacity=capacity)
 
