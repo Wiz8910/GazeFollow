@@ -10,6 +10,7 @@ import tensorflow as tf
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 import gaze_follow
+from image_dataset import Dataset
 
 FLAGS = None
 ANY_DIM = None
@@ -20,8 +21,11 @@ TRAINING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'train_annotations.txt')
 TESTING_FILE_PATH = os.path.join(DATA_FILE_PATH, 'test_annotations.txt')
 
 def main(_):
-    train_x, train_gaze_labels, train_eye_labels = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
-    test_x, test_gaze_labels, test_eye_labels = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
+    # train_images, train_gaze_labels, train_eye_labels = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
+    # test_images, test_gaze_labels, test_eye_labels = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
+
+    training_dataset = Dataset(TRAINING_FILE_PATH, DATA_FILE_PATH, dataset_size=1000, batch_size=100)
+    testing_dataset = Dataset(TESTING_FILE_PATH, DATA_FILE_PATH, dataset_size=1000, batch_size=100)
 
     # Create the model
     x = tf.placeholder(tf.float32, [None, gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH])
@@ -29,12 +33,14 @@ def main(_):
     b = tf.Variable(tf.zeros([25]))
     y = tf.matmul(x, W) + b
 
-    # # Define loss and optimizer
     gaze_y_ = tf.placeholder(tf.float32, [None, 25])
-    # eye_y_ = tf.placeholder(tf.float32, [None, 25])
+    eye_y_ = tf.placeholder(tf.float32, [None, 25])
 
+    # Define loss and optimizer
     cross_entropy1 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=gaze_y_, logits=y))
-    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy1)
+    cross_entropy2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=eye_y_, logits=y))
+    combined_entropy = cross_entropy1 + cross_entropy2
+    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(combined_entropy)
 
     with tf.Session() as sess:
 
@@ -43,22 +49,34 @@ def main(_):
         sess.run(init)
 
         # initialize the queue threads to start to shovel data
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
+        # coord = tf.train.Coordinator()
+        # threads = tf.train.start_queue_runners(coord=coord)
 
-        training_images = sess.run(train_x)
-        sess.run(train_step, feed_dict={x: training_images, gaze_y_:train_gaze_labels})
+        # feed_dict = {x: sess.run(train_images), gaze_y_:train_gaze_labels, eye_y_:train_eye_labels}
+        # sess.run(train_step, feed_dict=feed_dict)
+
+        for i in range(training_dataset.batch_count):
+            print("training batch: {}".format(i+1))
+            train_images, train_gaze_labels, train_eye_labels = training_dataset.next_batch()
+
+            feed_dict = {x: train_images, gaze_y_:train_gaze_labels, eye_y_:train_eye_labels}
+            sess.run(train_step, feed_dict=feed_dict)
+
+        print("completed training")
 
         # Test trained model
-        testing_images = sess.run(test_x)
+        # correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
+        # accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        # print(sess.run(accuracy, feed_dict={x: sess.run(test_images), gaze_y_: test_gaze_labels}))
+
+        test_images, test_gaze_labels, _ = testing_dataset.next_batch()
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        print(sess.run(accuracy, feed_dict={x: testing_images, gaze_y_: test_gaze_labels}))
+        print(sess.run(accuracy, feed_dict={x: test_images, gaze_y_: test_gaze_labels}))
 
         # stop our queue threads and properly close the session
-        coord.request_stop()
-        coord.join(threads)
-        sess.close()
+        # coord.request_stop()
+        # coord.join(threads)
 
 
 if __name__ == '__main__':

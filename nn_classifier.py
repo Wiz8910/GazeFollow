@@ -140,7 +140,6 @@ def main(_):
         # stop our queue threads and properly close the session
         coord.request_stop()
         coord.join(threads)
-        sess.close()
 
 
 if __name__ == '__main__':
