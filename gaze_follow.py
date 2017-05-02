@@ -53,20 +53,45 @@ def grid_label(xy_coordinates):
 
 def euclidean_dist(ground_truth_grid_label, predicted_grid_label):
     """convert label 0-24 to an x,y coordinate of range(0,1), take center of label."""
+
+    # gt_y = tf.to_float(tf.mod(ground_truth_grid_label, grid_size))
+    # gt_y = tf.add(gt_y, onehalf)
+    # gt_y = tf.divide(gt_y, grid_size)
+
+    # p_y = tf.to_float(tf.mod(predicted_grid_label, grid_size))
+    # p_y = tf.add(p_y, onehalf)
+    # p_y = tf.divide(p_y, grid_size)
+
+    # gt_x = tf.to_float(tf.floordiv(ground_truth_grid_label, grid_size))
+    # gt_x = tf.add(gt_x, onehalf)
+    # gt_x = tf.divide(gt_x, grid_size)
+
+    # p_x = tf.to_float(tf.floordiv(predicted_grid_label, grid_size))
+    # p_x = tf.add(p_x, onehalf)
+    # p_x = tf.divide(p_x, grid_size)
+
+    gt_x, gt_y = euclidean_coordinate(ground_truth_grid_label)
+    p_x, p_y = euclidean_coordinate(predicted_grid_label)
+
+    return tf.sqrt(tf.square(tf.subtract(gt_y, p_y) + tf.square(tf.subtract(gt_x, p_x))))
+
+def euclidean_coordinate(grid_label):
+    grid_size = tf.constant(GRID_SIZE, tf.int64)
+
+    x = tf.floordiv(grid_label, grid_size)
+    x = coord_shift(x, grid_size)
+
+    y = tf.mod(grid_label, grid_size)
+    y = coord_shift(y, grid_size)
+
+    return x, y
+
+def coord_shift(coord, grid_size):
     onehalf = tf.constant(0.5, tf.float32)
-    grid_size = tf.constant(5, tf.float32)
-
-    first = tf.to_float(tf.mod(ground_truth_grid_label, grid_size))
-    second = tf.add(first, onehalf)
-    third = tf.divide(second, grid_size)
-
-    gt_y = tf.divide((tf.mod(ground_truth_grid_label, grid_size) +onehalf), grid_size)
-    p_y = tf.divide((tf.mod(predicted_grid_label, grid_size) +onehalf), grid_size)
-
-    gt_x = tf.divide((tf.floordiv(ground_truth_grid_label, grid_size) +onehalf), grid_size)
-    p_x = tf.divide((tf.floordiv(ground_truth_grid_label, grid_size) +onehalf), grid_size)
-
-    return tf.sqrt(tf.square(tf.sub(gt_y, p_y) + tf.square(tf.sub(gt_x, p_x)), reduction_indices=1))
+    coord = tf.to_float(coord)
+    coord = tf.add(coord, onehalf)
+    coord = tf.divide(coord, tf.to_float(grid_size))
+    return coord
 
 def image_annotations(annotations_file_path, data_file_path, dataset_size):
 

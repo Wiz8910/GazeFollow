@@ -25,16 +25,21 @@ def main(_):
     # test_images, test_gaze_labels, test_eye_labels = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
 
     # 0.24
-    training_dataset_size = 100
-    training_batch_size = 10
-    testing_dataset_size = 50
-    testing_batch_size = 50
+    # training_dataset_size = 100
+    # training_batch_size = 10
+    # testing_dataset_size = 50
+    # testing_batch_size = 50
 
     # 0.05
     # training_dataset_size = 10000
     # training_batch_size = 100
     # testing_dataset_size = 2000
     # testing_batch_size = 2000
+
+    training_dataset_size = 5000
+    training_batch_size = 100
+    testing_dataset_size = 500
+    testing_batch_size = 500
 
     training_dataset = Dataset(TRAINING_FILE_PATH, DATA_FILE_PATH, training_dataset_size, training_batch_size)
     testing_dataset = Dataset(TESTING_FILE_PATH, DATA_FILE_PATH, testing_dataset_size, testing_batch_size)
@@ -84,10 +89,9 @@ def main(_):
 
         test_images, test_gaze_labels, _ = testing_dataset.next_batch()
 
-        # sess.run(tf.argmax(y, 1))
-        # correct_prediction = gaze_follow.euclidean_dist(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
+        correct_prediction = gaze_follow.euclidean_dist(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
+        # correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
 
-        correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         print(sess.run(accuracy, feed_dict={x: test_images, gaze_y_: test_gaze_labels}))
 
