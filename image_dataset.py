@@ -6,11 +6,17 @@ from PIL import Image
 import tensorflow as tf
 
 import gaze_follow
+from gaze_follow import IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_DEPTH
 
 class Dataset(object):
     """ Datasets for obtaining image batches and labels. """
 
-    def __init__(self, annotations_file_path, data_file_path, dataset_size, batch_size):
+    def __init__(self, annotations_file_path, data_file_path, dataset_size, batch_size,
+                 width=IMAGE_WIDTH, height=IMAGE_HEIGHT, depth=IMAGE_DEPTH):
+
+        self.width = width
+        self.height = height
+        self.depth = depth
 
         self.dataset_size = dataset_size
         self.batch_size = batch_size
@@ -32,13 +38,13 @@ class Dataset(object):
         # Prevent popping from empty stacks
         self.batch_size = min(self.batch_size, len(self._file_path_stack))
 
-        image_size = gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH
+        image_size = self.width * self.height * self.depth
         images = np.zeros((self.batch_size, image_size), dtype=np.uint8)
 
         for i in range(self.batch_size):
             file_path = self._file_path_stack.pop()
             image = Image.open(file_path)
-            image = image.resize((gaze_follow.IMAGE_WIDTH, gaze_follow.IMAGE_HEIGHT))
+            image = image.resize((self.width, self.height))
             image = np.array(image, dtype=np.uint8)
             images[i] = image.reshape(image_size)
 

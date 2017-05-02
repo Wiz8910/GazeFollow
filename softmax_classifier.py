@@ -24,12 +24,25 @@ def main(_):
     # train_images, train_gaze_labels, train_eye_labels = gaze_follow.image_data(TRAINING_FILE_PATH, DATA_FILE_PATH)
     # test_images, test_gaze_labels, test_eye_labels = gaze_follow.image_data(TESTING_FILE_PATH, DATA_FILE_PATH)
 
-    training_dataset = Dataset(TRAINING_FILE_PATH, DATA_FILE_PATH, dataset_size=1000, batch_size=100)
-    testing_dataset = Dataset(TESTING_FILE_PATH, DATA_FILE_PATH, dataset_size=1000, batch_size=100)
+    # 0.24
+    training_dataset_size = 100
+    training_batch_size = 10
+    testing_dataset_size = 50
+    testing_batch_size = 50
+
+    # 0.05
+    # training_dataset_size = 10000
+    # training_batch_size = 100
+    # testing_dataset_size = 2000
+    # testing_batch_size = 2000
+
+    training_dataset = Dataset(TRAINING_FILE_PATH, DATA_FILE_PATH, training_dataset_size, training_batch_size)
+    testing_dataset = Dataset(TESTING_FILE_PATH, DATA_FILE_PATH, testing_dataset_size, testing_batch_size)
 
     # Create the model
-    x = tf.placeholder(tf.float32, [None, gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH])
-    W = tf.Variable(tf.zeros([gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH, 25]))
+    image_dimension = gaze_follow.IMAGE_WIDTH * gaze_follow.IMAGE_HEIGHT * gaze_follow.IMAGE_DEPTH
+    x = tf.placeholder(tf.float32, [None, image_dimension])
+    W = tf.Variable(tf.zeros([image_dimension, 25]))
     b = tf.Variable(tf.zeros([25]))
     y = tf.matmul(x, W) + b
 
@@ -62,7 +75,7 @@ def main(_):
             feed_dict = {x: train_images, gaze_y_:train_gaze_labels, eye_y_:train_eye_labels}
             sess.run(train_step, feed_dict=feed_dict)
 
-        print("completed training")
+        print("training completed")
 
         # Test trained model
         # correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
@@ -70,6 +83,10 @@ def main(_):
         # print(sess.run(accuracy, feed_dict={x: sess.run(test_images), gaze_y_: test_gaze_labels}))
 
         test_images, test_gaze_labels, _ = testing_dataset.next_batch()
+
+        # sess.run(tf.argmax(y, 1))
+        # correct_prediction = gaze_follow.euclidean_dist(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
+
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(gaze_y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         print(sess.run(accuracy, feed_dict={x: test_images, gaze_y_: test_gaze_labels}))

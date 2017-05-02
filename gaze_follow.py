@@ -8,6 +8,8 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import PIL
+import math
+
 import display
 
 # Silence Tensorflow warnings
@@ -49,7 +51,24 @@ def grid_label(xy_coordinates):
 
     return int(GRID_SIZE * label_row + label_col)
 
-def image_annotations(annotations_file_path, data_file_path):
+def euclidean_dist(ground_truth_grid_label, predicted_grid_label):
+    """convert label 0-24 to an x,y coordinate of range(0,1), take center of label."""
+    onehalf = tf.constant(0.5, tf.float32)
+    grid_size = tf.constant(5, tf.float32)
+
+    first = tf.to_float(tf.mod(ground_truth_grid_label, grid_size))
+    second = tf.add(first, onehalf)
+    third = tf.divide(second, grid_size)
+
+    gt_y = tf.divide((tf.mod(ground_truth_grid_label, grid_size) +onehalf), grid_size)
+    p_y = tf.divide((tf.mod(predicted_grid_label, grid_size) +onehalf), grid_size)
+
+    gt_x = tf.divide((tf.floordiv(ground_truth_grid_label, grid_size) +onehalf), grid_size)
+    p_x = tf.divide((tf.floordiv(ground_truth_grid_label, grid_size) +onehalf), grid_size)
+
+    return tf.sqrt(tf.square(tf.sub(gt_y, p_y) + tf.square(tf.sub(gt_x, p_x)), reduction_indices=1))
+
+def image_annotations(annotations_file_path, data_file_path, dataset_size):
 
     with open(annotations_file_path, 'r') as f:
         i = 0
@@ -65,7 +84,7 @@ def image_annotations(annotations_file_path, data_file_path):
             image = np.array(Image.open(file_path), dtype=np.uint8)
 
             # Don't add gray scale images to data set
-            if len(image.shape) !=3:
+            if len(image.shape) != 3:
                 continue
 
             annotation_id = floats[0]
@@ -77,8 +96,8 @@ def image_annotations(annotations_file_path, data_file_path):
 
             yield ImageAnnotation(annotation_id, file_path, bounding_box, gaze, eye_center, gaze_label, eye_label)
             i += 1
-            if i == 1000:
-               break # remove this
+            if i == dataset_size:
+               break
 
 def image_data(annotations_file_path, data_file_path):
 
