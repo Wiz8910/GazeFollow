@@ -18,7 +18,8 @@ import GazeFollow.evaluation as evaluation
 def svm_classifier(image_file_path, data_file_path, inception_model_path):
 
     data_func = annotation.image_annotations(image_file_path, data_file_path,
-                                             dataset_size=1000, equal_class_proportions=True)
+                                             dataset_size=1000,
+                                             equal_class_proportions=True)
     data = [(a.file_path, a.gaze_label) for a in data_func]
     file_paths, gaze_labels = zip(*data)
 
