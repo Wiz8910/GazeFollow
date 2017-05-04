@@ -90,6 +90,7 @@ def main():
         svm_classifier(training_file_path, args.data_folder_path, args.svm_model_file_path)
 
     # display images
+    # annotations = annotation.image_annotations(image_file_path, data_file_path, dataset_size=10)
     # for annotation in annotations:
     #    display.image_with_annotation(annotation, GRID_SIZE)
 
