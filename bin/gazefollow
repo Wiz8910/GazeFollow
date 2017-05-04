@@ -1,0 +1,6 @@
+#!/Users/colinconduff/Desktop/ComputerVision/project/GazeFollow/bin/python3
+# EASY-INSTALL-DEV-SCRIPT: 'GazeFollow==0.2','gazefollow'
+__requires__ = 'GazeFollow==0.2'
+__import__('pkg_resources').require('GazeFollow==0.2')
+__file__ = '/Users/colinconduff/Desktop/ComputerVision/project/GazeFollow/GazeFollow/gazefollow'
+exec(compile(open(__file__).read(), __file__, 'exec'))

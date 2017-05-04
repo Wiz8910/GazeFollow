@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-import annotation
+import GazeFollow.annotation as annotation
 
 class Dataset(object):
     """ Datasets for obtaining image batches and labels. """

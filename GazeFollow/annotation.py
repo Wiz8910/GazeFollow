@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 from PIL import Image
 
-import constants
+import GazeFollow.constants as constants
 
 """
 Tuple containing image annotation data.
@@ -17,7 +17,16 @@ Note: README_dataset.txt is incorrect
 ImageAnnotation = namedtuple('ImageAnnotation', [
     'id', 'file_path', 'bounding_box', 'gaze', 'eye_center', 'gaze_label', 'eye_label'])
 
-def image_annotations(annotations_file_path, data_file_path, dataset_size):
+def image_annotations(annotations_file_path, data_file_path,
+                      dataset_size, equal_class_proportions=False):
+    """
+    Returns image annotation tuples for images located at annotations_file_path.
+    Args:
+        equal_class_proportions: Obtain equal amounts of data from each grid label class.
+    """
+    if equal_class_proportions:
+        bucket_size = dataset_size // 25
+        buckets = np.zeros(25)
 
     with open(annotations_file_path, 'r') as f:
         i = 0
@@ -43,11 +52,19 @@ def image_annotations(annotations_file_path, data_file_path, dataset_size):
             gaze = floats[7:]
             gaze_label = grid_label(gaze)
 
+            # Skip this image if class proportions will not be equal
+            if equal_class_proportions:
+                if buckets[gaze_label] > bucket_size + 1:
+                    continue
+                buckets[gaze_label] += 1
+
             yield ImageAnnotation(annotation_id, file_path, bounding_box,
                                   gaze, eye_center, gaze_label, eye_label)
             i += 1
             if i == dataset_size:
-               break
+                if equal_class_proportions:
+                    print(buckets)
+                break
 
 def grid_label(xy_coordinates):
     """
