@@ -13,6 +13,33 @@ PIL, pillow
 tensorflow
 matplotlib
 
+Results:
+Neural net classifier
+Euclidean dist: 0.400344 with combined cross entropy
+Euclidean dist: 0.390389
+Accuracy 0.058, time to completion ~5 min.
+training_dataset_size = 10000, training_batch_size = 100
+testing_dataset_size = 2000, testing_batch_size = 2000
+
+Softmax classifier 
+Accuracy 0.24, euclidean: 0.32
+training_dataset_size = 100
+training_batch_size = 10
+testing_dataset_size = 50
+testing_batch_size = 50
+
+Accuracy 0.05, euclidean: .52
+training_dataset_size = 10000
+training_batch_size = 100
+testing_dataset_size = 2000
+testing_batch_size = 2000
+
+combined euc dist. 0.415177
+training_dataset_size = 5000
+training_batch_size = 100
+testing_dataset_size = 1000
+testing_batch_size = 1000
+
 Selected quotes from "Where are they looking", Recasens et al.
 
 SVM: 
