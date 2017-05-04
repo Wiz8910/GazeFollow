@@ -8,6 +8,59 @@ import tensorflow as tf
 
 import GazeFollow.evaluation as evaluation
 
+def nn_classifier(training_dataset, testing_dataset):
+    """
+    Neural net classifier for gaze location in grid.
+    Args:
+          train_fp: Training images file path
+          test_fp: Testing images file path
+          data_fp: Data file path
+    """
+    image_size = training_dataset.width * training_dataset.height * training_dataset.depth # 2352
+
+    print("data loaded")
+
+    x = tf.placeholder(tf.float32, [None, image_size])
+
+    # Define loss and optimizer
+    gaze_y_ = tf.placeholder(tf.float32, [None, 25])
+
+    # Build the graph for the deep net
+    y_conv, keep_prob = deepnn(x)
+
+    cross_entropy = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits(labels=gaze_y_, logits=y_conv))
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
+    correct_prediction = evaluation.euclidean_dist(tf.argmax(y_conv, 1), tf.argmax(gaze_y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+    with tf.Session() as sess:
+
+        # initialize the variables
+        init = tf.global_variables_initializer()
+        sess.run(init)
+
+        for i in range(training_dataset.batch_count):
+            train_images, train_gaze_labels, _ = training_dataset.next_batch()
+            print('training batch: {}'.format(i+1))
+
+            train_step.run(feed_dict={
+                x: train_images,
+                gaze_y_: train_gaze_labels,
+                keep_prob: 0.5
+            })
+
+        print("training finished")
+
+        # Test trained model
+        test_images, test_gaze_labels, _ = testing_dataset.next_batch()
+        print('test accuracy %g' % accuracy.eval(feed_dict={
+            x: test_images,
+            gaze_y_: test_gaze_labels,
+            keep_prob: 1.0
+        }))
+
 def deepnn(x):
     """
     Build the graph for a deep net for classifying labels.
@@ -76,56 +129,3 @@ def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
-
-def nn_classifier(training_dataset, testing_dataset):
-    """
-    Neural net classifier for gaze location in grid.
-    Args:
-          train_fp: Training images file path
-          test_fp: Testing images file path
-          data_fp: Data file path
-    """
-    image_size = training_dataset.width * training_dataset.height * training_dataset.depth # 2352
-
-    print("data loaded")
-
-    x = tf.placeholder(tf.float32, [None, image_size])
-
-    # Define loss and optimizer
-    gaze_y_ = tf.placeholder(tf.float32, [None, 25])
-
-    # Build the graph for the deep net
-    y_conv, keep_prob = deepnn(x)
-
-    cross_entropy = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(labels=gaze_y_, logits=y_conv))
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-
-    correct_prediction = evaluation.euclidean_dist(tf.argmax(y_conv, 1), tf.argmax(gaze_y_, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-    with tf.Session() as sess:
-
-        # initialize the variables
-        init = tf.global_variables_initializer()
-        sess.run(init)
-
-        for i in range(training_dataset.batch_count):
-            train_images, train_gaze_labels, _ = training_dataset.next_batch()
-            print('training batch: {}'.format(i+1))
-
-            train_step.run(feed_dict={
-                x: train_images,
-                gaze_y_: train_gaze_labels,
-                keep_prob: 0.5
-            })
-
-        print("training finished")
-
-        # Test trained model
-        test_images, test_gaze_labels, _ = testing_dataset.next_batch()
-        print('test accuracy %g' % accuracy.eval(feed_dict={
-            x: test_images,
-            gaze_y_: test_gaze_labels,
-            keep_prob: 1.0
-        }))

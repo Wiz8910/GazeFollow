@@ -46,6 +46,9 @@ class Dataset(object):
             image = Image.open(file_path)
             image = image.resize((self.width, self.height))
             image = np.array(image, dtype=np.uint8)
+
+            # Change colorspace
+
             images[i] = image.reshape(image_size)
 
         gaze_labels = np.zeros((self.batch_size, 25), dtype=np.float)
