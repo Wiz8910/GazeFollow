@@ -7,12 +7,12 @@ import tensorflow as tf
 # Silence Tensorflow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
-import constants
-import display
-from image_dataset import Dataset
-from nn_classifier import nn_classifier
-from softmax_classifier import softmax_classifier
-from svm_classifier import svm_classifier
+import GazeFollow.constants as constants
+import GazeFollow.display as display
+from GazeFollow.image_dataset import Dataset
+from GazeFollow.nn_classifier import nn_classifier
+from GazeFollow.softmax_classifier import softmax_classifier
+from GazeFollow.svm_classifier import svm_classifier
 
 DESCRIPTION = 'Follow the gaze of a subject in an image using various computer vision methods.'
 
@@ -30,7 +30,6 @@ def main():
 
     args = parser.parse_args()
 
-    print(args.method)
 
     # Validate input
     if not os.path.exists(args.data_folder_path):
@@ -88,9 +87,7 @@ def main():
         softmax_classifier(training_dataset, testing_dataset)
 
     elif args.method == 'svm':
-        model_output_path = "svm_model.txt"
-        svm_classifier(training_file_path, args.data_folder_path,
-                       args.svm_model_file_path, model_output_path)
+        svm_classifier(training_file_path, args.data_folder_path, args.svm_model_file_path)
 
     # display images
     # for annotation in annotations:

@@ -1,9 +1,9 @@
 
 import tensorflow as tf
 
-from image_dataset import Dataset
-import evaluation
-import constants
+from GazeFollow.image_dataset import Dataset
+import GazeFollow.evaluation as evaluation
+import GazeFollow.constants as constants
 
 def softmax_classifier(training_dataset, testing_dataset):
 

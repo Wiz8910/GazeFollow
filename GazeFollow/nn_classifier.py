@@ -6,10 +6,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-# Silence Tensorflow warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-import evaluation
+import GazeFollow.evaluation as evaluation
 
 def deepnn(x):
     """
