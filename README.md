@@ -4,10 +4,21 @@ This project implements several computer vision machine learning methods for
 locating where subjects in images are looking.  
 It was inspired by the paper "Where are they looking?" which can be found at 
 `http://gazefollow.csail.mit.edu/`.
+To see report giving full results check Report directory
+The dataset will need to be downloaded from there, it is 6 gigs big so we can't
+upload it via canvas.
+In addition for SVM a pretrained model is needed we got ours from
+https://storage.googleapis.com/download.tensorflow.org/models/inception_dec_2015.zip
 
+For the matlab version
+Run main.m in the matlab code file. It assumes that training images are in a train directory, testing images
+are in a test directory and train_annotations & test_annotations from the gazefollow project are in the local directory.
+
+For the python project using tensorflow
 Installation instructions:
     Download GazeFollow dataset from `http://gazefollow.csail.mit.edu/`
-    `pip3 install setup.py`
+    `pip3 install setup.py` if that doesn't work please do 
+	'python setup.py develop'
 
 For usage instructions:
     `gazefollow -h`

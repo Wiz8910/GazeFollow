@@ -10,16 +10,15 @@ load('test_annotations')
 %               train_meta
 %               trainf_path
 load('train_annotations')
-trainSaveFile = 'trainDataGray.mat';
-testSaveFile = 'testDataGray.mat';
+trainSaveFile = 'trainData.mat';
+testSaveFile = 'testData.mat';
 
-%{
+
 trainGazeStartX = [];
 trainGazeEndX = [];
 trainGazeStartY = [];
 trainGazeEndY = [];
 trainIm =[];
-imLength = 388608;
 WIDTH = 256;%256;
 HEIGHT = 256;%256;
 
@@ -30,17 +29,17 @@ while i<=numIms%size(train_eyes,2)
     im = imread(train_path{i});
     %im = im(:,:,1);
     if(size(im,3)==3)
-        im = rgb2gray(im);
+		%if you want a colorspace convert here
+        %im = rgb2gray(im);
+        im = imresize(im,[WIDTH,HEIGHT]);
+        trainIm= [trainIm im(:)];
+        trainGazeStartX = [trainGazeStartX train_eyes{i}(1)];
+        trainGazeEndX = [trainGazeEndX train_gaze{i}(1)];
+        trainGazeStartY = [trainGazeStartY train_eyes{i}(2)];
+        trainGazeEndY = [trainGazeEndY train_gaze{i}(2)];
+    else
+    	numIms = numIms+1;
     end
-    im = imresize(im,[WIDTH,HEIGHT]);
-    trainIm= [trainIm im(:)];
-    trainGazeStartX = [trainGazeStartX train_eyes{i}(1)];
-    trainGazeEndX = [trainGazeEndX train_gaze{i}(1)];
-    trainGazeStartY = [trainGazeStartY train_eyes{i}(2)];
-    trainGazeEndY = [trainGazeEndY train_gaze{i}(2)];
-    %else
-    %	numIms = numIms+1;
-    %end
     i=i+1;
 end
 %normalize images
@@ -64,23 +63,22 @@ testGazeEndX = [];
 testGazeStartY = [];
 testGazeEndY = [];
 testIm =[];
-numTestIms= 2000;
+numTestIms= 1000;
 i=1;
-while i<=numIms%size(test_eyes,2)
+while i<=numTestIms%size(test_eyes,2)
     im = imread(test_path{i});
     %im = im(:,:,1);
     if(size(im,3)==3)
-        im = rgb2gray(im);
+        %im = rgb2gray(im);
+        im = imresize(im,[WIDTH,HEIGHT]);
+        testIm= [testIm im(:)];
+        testGazeStartX = [testGazeStartX test_eyes{i}(1)];
+        testGazeEndX = [testGazeEndX test_gaze{i}(1)];
+        testGazeStartY = [testGazeStartY test_eyes{i}(2)];
+        testGazeEndY = [testGazeEndY test_gaze{i}(2)];
+    else
+        numTestIms = numTestIms+1;
     end
-    im = imresize(im,[WIDTH,HEIGHT]);
-    testIm= [testIm im(:)];
-    testGazeStartX = [testGazeStartX test_eyes{i}(1)];
-    testGazeEndX = [testGazeEndX test_gaze{i}(1)];
-    testGazeStartY = [testGazeStartY test_eyes{i}(2)];
-    testGazeEndY = [testGazeEndY test_gaze{i}(2)];
-    %else
-    %    numTestIms = numTestIms+1;
-    %end
     i=i+1;
 end
 %normalize images
@@ -90,7 +88,7 @@ testIm = testIm(rowsDeviating,:);
 
 testIm = [ones(1,size(testIm,2)); testIm];
 save(testSaveFile,'testIm','testGazeStartX','testGazeEndX','testGazeStartY','testGazeEndY','-v7.3');
-%}
+
 
 method = 'dualLinear';
 load(trainSaveFile)%;,trainIm,trainGazeStartX,trainGazeEndX,trainGazeStartY,trainGazeEndY);
@@ -98,8 +96,9 @@ load(testSaveFile);%,testIm,testGazeStartX,testGazeEndX,testGazeStartY,testGazeE
 
 [avgError, startX,startY,inferredX,inferredY] = ClassifyImages(trainIm,trainGazeStartX,trainGazeEndX,trainGazeStartY,trainGazeEndY,...
                                 testIm,testGazeStartX,testGazeEndX,testGazeStartY,testGazeEndY,method);
-
-imsToShow = 10;
+sum = inferredX+inferredY;
+disp(avgError);
+imsToShow = 1;
 for i=1:imsToShow%size(test_eyes,2)
     eyeLoc = test_eyes{i};
     gazeLoc = test_gaze{i};
