@@ -51,7 +51,8 @@ def main():
 
     training_file_path = os.path.join(args.data_folder_path, 'train_annotations.txt')
     testing_file_path = os.path.join(args.data_folder_path, 'test_annotations.txt')
-
+	batchSize=25
+	
     if args.method == 'neural_net':
         # training_dataset = Dataset(training_file_path, args.data_folder_path,
         #                            dataset_size=10000, batch_size=100,
@@ -60,10 +61,10 @@ def main():
         #                           dataset_size=2000, batch_size=2000,
         #                           width=28, height=28, depth=3)
         training_dataset = Dataset(training_file_path, args.data_folder_path,
-                                   dataset_size=1, batch_size=1,
+                                   dataset_size=constants.DATA_SIZE, batch_size=batchSize,
                                    width=28, height=28, depth=3)
         testing_dataset = Dataset(testing_file_path, args.data_folder_path,
-                                  dataset_size=1, batch_size=1,
+                                  dataset_size=constants.DATA_SIZE, batch_size=batchSize,
                                   width=28, height=28, depth=3)
         nn_classifier(training_dataset, testing_dataset)
 
@@ -77,11 +78,11 @@ def main():
         #                           width=constants.IMAGE_WIDTH, height=constants.IMAGE_HEIGHT,
         #                           depth=constants.IMAGE_DEPTH)
         training_dataset = Dataset(training_file_path, args.data_folder_path,
-                                   dataset_size=1, batch_size=1,
+                                   dataset_size=constants.DATA_SIZE, batch_size=batchSize,
                                    width=constants.IMAGE_WIDTH, height=constants.IMAGE_HEIGHT,
                                    depth=constants.IMAGE_DEPTH)
         testing_dataset = Dataset(testing_file_path, args.data_folder_path,
-                                  dataset_size=1, batch_size=1,
+                                  dataset_size=constants.DATA_SIZE, batch_size=batchSize,
                                   width=constants.IMAGE_WIDTH, height=constants.IMAGE_HEIGHT,
                                   depth=constants.IMAGE_DEPTH)
         softmax_classifier(training_dataset, testing_dataset)
